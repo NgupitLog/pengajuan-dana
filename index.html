@@ -54,6 +54,14 @@ td { padding:6px; }
   margin-top:10px;
   font-weight:bold;
 }
+
+/* SEARCH COMPANY */
+#companySearch {
+  margin-bottom:6px;
+}
+#companyName {
+  height:auto;
+}
 </style>
 </head>
 
@@ -81,9 +89,8 @@ td { padding:6px; }
 
     <div class="col">
       <label>Company Name</label>
-      <select id="companyName">
-        <option value="">-- pilih company --</option>
-      </select>
+      <input type="text" id="companySearch" placeholder="Cari company..." autocomplete="off">
+      <select id="companyName" size="5"></select>
     </div>
   </div>
 </div>
@@ -100,11 +107,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLS1VOGQkYqBTkyJTtwA22yldbHC1SCmyvmXPKsa1Yl8IOFUVfIoL6XQcOi9jFVRqNVQ/exec";
 
   const picSelect = document.getElementById("pic");
-  const belongsToSelect = document.getElementById("belongsTo");
   const companySelect = document.getElementById("companyName");
+  const companySearch = document.getElementById("companySearch");
   const soContainer = document.getElementById("soContainer");
   const btnAddSO = document.getElementById("btnAddSO");
   const btnSubmit = document.getElementById("btnSubmit");
+
+  let companyList = [];
 
   /* ===== LOAD PIC ===== */
   fetch(SCRIPT_URL + "?type=pic")
@@ -121,10 +130,31 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(r => r.json())
     .then(list => {
       if (!Array.isArray(list)) return;
-      list.forEach(v => {
-        companySelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
-      });
+      companyList = list;
+      renderCompany(list);
     });
+
+  function renderCompany(list) {
+    companySelect.innerHTML = "";
+    list.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      companySelect.appendChild(opt);
+    });
+  }
+
+  companySearch.addEventListener("input", function () {
+    const keyword = this.value.toLowerCase();
+    const filtered = companyList.filter(c =>
+      c.toLowerCase().includes(keyword)
+    );
+    renderCompany(filtered);
+  });
+
+  companySelect.addEventListener("change", function () {
+    companySearch.value = this.value;
+  });
 
   /* ===== ADD SO ===== */
   function addSO() {
@@ -202,21 +232,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ===== SUBMIT ===== */
-  function submitData() {
+  btnSubmit.addEventListener("click", () => {
     alert("SUBMIT OK – backend sudah siap");
-  }
+  });
 
-  /* ===== BIND BUTTON ===== */
   btnAddSO.addEventListener("click", addSO);
-  btnSubmit.addEventListener("click", submitData);
 
-  /* DEFAULT 1 SO */
-  addSO();
-
+  addSO(); // default 1 SO
 });
 </script>
 
 </body>
 </html>
-
-
