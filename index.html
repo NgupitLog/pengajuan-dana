@@ -102,56 +102,44 @@ document.addEventListener("DOMContentLoaded", function () {
   const picSelect = document.getElementById("pic");
   const belongsToSelect = document.getElementById("belongsTo");
   const companySelect = document.getElementById("companyName");
-  const soContainer = document.getElementById("soContainer");
-
-  // 🔒 fallback biar gak crash walau tombol belum ada
-  const btnSubmit = document.getElementById("btnSubmit") || {
-    disabled: false,
-    innerText: "SUBMIT"
-  };
+  const btnSubmit = document.getElementById("btnSubmit");
 
   /* ======================
      LOAD PIC
      ====================== */
-  if (picSelect) {
-    fetch(SCRIPT_URL + "?type=pic")
-      .then(r => r.json())
-      .then(list => {
-        if (!Array.isArray(list)) return;
-        list.forEach(v => {
-          const o = document.createElement("option");
-          o.value = v;
-          o.textContent = v;
-          picSelect.appendChild(o);
-        });
-      })
-      .catch(err => console.error("PIC error:", err));
-  }
+  fetch(SCRIPT_URL + "?type=pic")
+    .then(r => r.json())
+    .then(list => {
+      if (!Array.isArray(list)) return;
+      list.forEach(v => {
+        const o = document.createElement("option");
+        o.value = v;
+        o.textContent = v;
+        picSelect.appendChild(o);
+      });
+    })
+    .catch(err => console.error("PIC error:", err));
 
   /* ======================
      LOAD COMPANY
      ====================== */
-  if (companySelect) {
-    fetch(SCRIPT_URL + "?type=company")
-      .then(r => r.json())
-      .then(list => {
-        if (!Array.isArray(list)) return;
-        list.forEach(v => {
-          const o = document.createElement("option");
-          o.value = v;
-          o.textContent = v;
-          companySelect.appendChild(o);
-        });
-      })
-      .catch(err => console.error("Company error:", err));
-  }
+  fetch(SCRIPT_URL + "?type=company")
+    .then(r => r.json())
+    .then(list => {
+      if (!Array.isArray(list)) return;
+      list.forEach(v => {
+        const o = document.createElement("option");
+        o.value = v;
+        o.textContent = v;
+        companySelect.appendChild(o);
+      });
+    })
+    .catch(err => console.error("Company error:", err));
 
   /* ======================
      SO & BIAYA
      ====================== */
   window.addSO = function () {
-    if (!soContainer) return;
-
     const so = document.createElement("div");
     so.className = "so-block";
 
@@ -186,12 +174,12 @@ document.addEventListener("DOMContentLoaded", function () {
       <div class="total">Total SO: Rp <span class="totalSo">0</span></div>
     `;
 
-    soContainer.appendChild(so);
+    document.getElementById("soContainer").appendChild(so);
     addItem(so.querySelector(".btn"));
   };
 
   window.addItem = function (btn) {
-    const tbody = btn?.parentElement?.querySelector(".items");
+    const tbody = btn.parentElement.querySelector(".items");
     if (!tbody) return;
 
     const tr = document.createElement("tr");
@@ -214,27 +202,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   window.calc = function (input) {
     const so = input.closest(".so-block");
-    if (!so) return;
     let total = 0;
     so.querySelectorAll(".nominal").forEach(n => total += Number(n.value || 0));
     so.querySelector(".totalSo").innerText = total.toLocaleString("id-ID");
   };
 
   window.removeRow = function (btn) {
-    const tr = btn.closest("tr");
     const so = btn.closest(".so-block");
-    tr?.remove();
-    const n = so?.querySelector(".nominal");
+    btn.closest("tr").remove();
+    const n = so.querySelector(".nominal");
     if (n) calc(n);
   };
 
   /* ======================
-     SUBMIT (ANTI DOUBLE & ANTI BLANK)
+     SUBMIT (LOCKED)
      ====================== */
   window.submitData = function () {
     if (btnSubmit.disabled) return;
 
-    if (!picSelect?.value || !belongsToSelect?.value || !companySelect?.value) {
+    if (!picSelect.value || !belongsToSelect.value || !companySelect.value) {
       alert("Header wajib diisi");
       return;
     }
@@ -252,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".so-block").forEach(so => {
       const items = [];
       so.querySelectorAll("tbody tr").forEach(r => {
-        const nominal = Number(r.querySelector(".nominal")?.value || 0);
+        const nominal = Number(r.querySelector(".nominal").value || 0);
         if (nominal > 0) {
           items.push({
             jenisBiaya: r.querySelector(".jenisBiaya").value,
@@ -264,10 +250,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (items.length === 0) return;
 
       data.soList.push({
-        soNumber: so.querySelector(".soNumber")?.value || "",
-        blAju: so.querySelector(".blAju")?.value || "",
-        shipmentType: so.querySelector(".shipmentType")?.value || "",
-        qty: so.querySelector(".qty")?.value || "",
+        soNumber: so.querySelector(".soNumber").value,
+        blAju: so.querySelector(".blAju").value,
+        shipmentType: so.querySelector(".shipmentType").value,
+        qty: so.querySelector(".qty").value,
         items
       });
     });
@@ -295,12 +281,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
-  // default 1 SO (AMAN)
-  if (soContainer) addSO();
-
+  // default 1 SO
+  addSO();
 });
 </script>
 
 </body>
 </html>
+
 
