@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form Pengajuan Estimasi Dana</title>
 
 <style>
@@ -24,12 +25,19 @@ label { font-size:13px; font-weight:bold; }
 input, select {
   width:100%;
   padding:6px;
-  margin-bottom:10px;
+  margin-bottom:8px;
   font-size:13px;
 }
 
-.row { display:flex; gap:10px; }
+.row { display:flex; gap:10px; flex-wrap:wrap; }
 .col { flex:1; }
+
+/* ukuran kolom SO */
+.col.so { flex:2 }
+.col.bl { flex:2 }
+.col.eta { flex:1.2 }
+.col.ship { flex:1 }
+.col.qty { flex:0.8 }
 
 table { width:100%; border-collapse:collapse; margin-top:10px; }
 th {
@@ -38,6 +46,8 @@ th {
   padding:6px;
 }
 td { padding:6px; }
+
+td.aksi { text-align:center; vertical-align:middle; }
 
 .btn {
   background:#ff8c00;
@@ -48,19 +58,21 @@ td { padding:6px; }
   cursor:pointer;
 }
 .btn-blue { background:#0b4ea2; }
-.btn-danger { background:#e74c3c; }
-
-.total {
-  margin-top:10px;
-  font-weight:bold;
+.btn-danger {
+  background:#e74c3c;
+  padding:4px 10px;
+  line-height:1;
 }
 
-/* SEARCH COMPANY */
-#companySearch {
-  margin-bottom:6px;
-}
-#companyName {
-  height:auto;
+.total { margin-top:8px; font-weight:bold; }
+
+/* company search */
+#companySearch { margin-bottom:4px; }
+
+/* MOBILE */
+@media (max-width:768px){
+  .row { flex-direction:column; }
+  .btn { width:100%; }
 }
 </style>
 </head>
@@ -73,9 +85,7 @@ td { padding:6px; }
   <div class="row">
     <div class="col">
       <label>PIC</label>
-      <select id="pic">
-        <option value="">-- pilih --</option>
-      </select>
+      <select id="pic"><option value="">-- pilih --</option></select>
     </div>
 
     <div class="col">
@@ -89,7 +99,7 @@ td { padding:6px; }
 
     <div class="col">
       <label>Company Name</label>
-      <input type="text" id="companySearch" placeholder="Cari company..." autocomplete="off">
+      <input id="companySearch" placeholder="Cari company...">
       <select id="companyName" size="5"></select>
     </div>
   </div>
@@ -102,143 +112,122 @@ td { padding:6px; }
 <button class="btn" id="btnSubmit">SUBMIT</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLS1VOGQkYqBTkyJTtwA22yldbHC1SCmyvmXPKsa1Yl8IOFUVfIoL6XQcOi9jFVRqNVQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7iYopJE_fuA7VmDk0PpBd-ZelViruUBKHESXOOdLFCdqgg1wZsiTziTh88kRmnJnjuw/exec";
 
-  const picSelect = document.getElementById("pic");
-  const companySelect = document.getElementById("companyName");
-  const companySearch = document.getElementById("companySearch");
-  const soContainer = document.getElementById("soContainer");
-  const btnAddSO = document.getElementById("btnAddSO");
-  const btnSubmit = document.getElementById("btnSubmit");
+const pic = document.getElementById("pic");
+const companySearch = document.getElementById("companySearch");
+const companySelect = document.getElementById("companyName");
+const soContainer = document.getElementById("soContainer");
+const btnAddSO = document.getElementById("btnAddSO");
+const btnSubmit = document.getElementById("btnSubmit");
 
-  let companyList = [];
+let companyList = [];
+let submitting = false;
 
-  /* ===== LOAD PIC ===== */
-  fetch(SCRIPT_URL + "?type=pic")
-    .then(r => r.json())
-    .then(list => {
-      if (!Array.isArray(list)) return;
-      list.forEach(v => {
-        picSelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
-      });
-    });
+/* LOAD PIC */
+fetch(SCRIPT_URL+"?type=pic").then(r=>r.json()).then(d=>{
+  d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`));
+});
 
-  /* ===== LOAD COMPANY ===== */
-  fetch(SCRIPT_URL + "?type=company")
-    .then(r => r.json())
-    .then(list => {
-      if (!Array.isArray(list)) return;
-      companyList = list;
-      renderCompany(list);
-    });
+/* LOAD COMPANY */
+fetch(SCRIPT_URL+"?type=company").then(r=>r.json()).then(d=>{
+  companyList=d;
+  renderCompany(d);
+});
 
-  function renderCompany(list) {
-    companySelect.innerHTML = "";
-    list.forEach(v => {
-      const opt = document.createElement("option");
-      opt.value = v;
-      opt.textContent = v;
-      companySelect.appendChild(opt);
-    });
-  }
-
-  companySearch.addEventListener("input", function () {
-    const keyword = this.value.toLowerCase();
-    const filtered = companyList.filter(c =>
-      c.toLowerCase().includes(keyword)
-    );
-    renderCompany(filtered);
+function renderCompany(list){
+  companySelect.innerHTML="";
+  list.forEach(v=>{
+    companySelect.insertAdjacentHTML("beforeend",`<option>${v}</option>`);
   });
+}
 
-  companySelect.addEventListener("change", function () {
-    companySearch.value = this.value;
-  });
+/* SEARCH + AUTO HIDE */
+companySearch.addEventListener("input",()=>{
+  companySelect.style.display="block";
+  renderCompany(companyList.filter(c=>c.toLowerCase().includes(companySearch.value.toLowerCase())));
+});
 
-  /* ===== ADD SO ===== */
-  function addSO() {
-    const so = document.createElement("div");
-    so.className = "so-block";
+companySelect.addEventListener("change",()=>{
+  companySearch.value=companySelect.value;
+  companySelect.style.display="none";
+});
 
-    so.innerHTML = `
-      <h3>Detail SO</h3>
+companySearch.addEventListener("focus",()=>{
+  companySelect.style.display="block";
+});
 
-      <div class="row">
-        <div class="col"><label>SO Number</label><input class="soNumber"></div>
-        <div class="col"><label>BL / AJU</label><input class="blAju"></div>
-        <div class="col"><label>ETA</label><input class="ETA"></div>
-        <div class="col">
-          <label>FCL / LCL</label>
-          <select class="shipmentType">
-            <option>FCL</option>
-            <option>LCL</option>
-          </select>
-        </div>
-        <div class="col"><label>QTY</label><input class="qty"></div>
-      </div>
+/* ADD SO */
+function addSO(){
+  const so=document.createElement("div");
+  so.className="so-block";
+  so.innerHTML=`
+  <button class="btn btn-danger" style="float:right">HAPUS SO</button>
+  <h3>Detail SO</h3>
 
-      <table>
-        <thead>
-          <tr>
-            <th style="width:40%">Jenis Biaya</th>
-            <th style="width:50%">Nominal (Rp)</th>
-            <th style="width:10%">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="items"></tbody>
-      </table>
+  <div class="row">
+    <div class="col so"><label>SO Number</label><input class="soNumber"></div>
+    <div class="col bl"><label>BL / AJU</label><input class="blAju"></div>
+    <div class="col eta"><label>ETA</label><input></div>
+    <div class="col ship"><label>FCL/LCL</label><select><option>FCL</option><option>LCL</option></select></div>
+    <div class="col qty"><label>QTY</label><input></div>
+  </div>
 
-      <button type="button" class="btn addBiaya">+ Tambah Biaya</button>
-      <div class="total">Total SO: Rp <span class="totalSo">0</span></div>
-    `;
+  <table>
+    <thead><tr><th>Jenis Biaya</th><th>Nominal</th><th>Aksi</th></tr></thead>
+    <tbody class="items"></tbody>
+  </table>
 
-    soContainer.appendChild(so);
+  <button class="btn addBiaya">+ Tambah Biaya</button>
+  <div class="total">Total SO: Rp <span>0</span></div>
+  `;
+  soContainer.appendChild(so);
 
-    so.querySelector(".addBiaya").addEventListener("click", () => addItem(so));
-    addItem(so);
-  }
+  so.querySelector(".btn-danger").onclick=()=>so.remove();
+  so.querySelector(".addBiaya").onclick=()=>addItem(so);
+  addItem(so);
+}
 
-  function addItem(so) {
-    const tbody = so.querySelector(".items");
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>
-        <select class="jenisBiaya">
-          <option>DO</option>
-          <option>Storage</option>
-          <option>Handling</option>
-          <option>Trucking</option>
-          <option>LOLO</option>
-          <option>Others</option>
-        </select>
-      </td>
-      <td><input type="number" class="nominal" value="0"></td>
-      <td><button class="btn btn-danger">X</button></td>
-    `;
-    tbody.appendChild(tr);
+function addItem(so){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+  <td><select><option>DO</option><option>Storage</option><option>Handling</option></select></td>
+  <td><input type="number" value="0"></td>
+  <td class="aksi"><button class="btn btn-danger">X</button></td>`;
+  so.querySelector(".items").appendChild(tr);
 
-    tr.querySelector(".nominal").addEventListener("input", () => calc(so));
-    tr.querySelector(".btn-danger").addEventListener("click", () => {
-      tr.remove();
-      calc(so);
+  tr.querySelector("input").oninput=()=>calc(so);
+  tr.querySelector("button").onclick=()=>{tr.remove();calc(so)};
+}
+
+function calc(so){
+  let t=0;
+  so.querySelectorAll("tbody input").forEach(i=>t+=Number(i.value||0));
+  so.querySelector(".total span").innerText=t.toLocaleString("id-ID");
+}
+
+/* SUBMIT LOCK + SEND */
+btnSubmit.onclick=()=>{
+  if(submitting) return;
+  submitting=true;
+  btnSubmit.innerText="Mengirim...";
+  btnSubmit.disabled=true;
+
+  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({ok:true})})
+    .then(()=>alert("BERHASIL"))
+    .catch(()=>alert("GAGAL"))
+    .finally(()=>{
+      submitting=false;
+      btnSubmit.innerText="SUBMIT";
+      btnSubmit.disabled=false;
     });
-  }
+};
 
-  function calc(so) {
-    let total = 0;
-    so.querySelectorAll(".nominal").forEach(n => total += Number(n.value || 0));
-    so.querySelector(".totalSo").innerText = total.toLocaleString("id-ID");
-  }
+btnAddSO.onclick=addSO;
+addSO();
 
-  /* ===== SUBMIT ===== */
-  btnSubmit.addEventListener("click", () => {
-    alert("SUBMIT OK – backend sudah siap");
-  });
-
-  btnAddSO.addEventListener("click", addSO);
-
-  addSO(); // default 1 SO
 });
 </script>
 
