@@ -1,3 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Form Pengajuan Estimasi Dana</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  padding:20px;
+}
+h2 { color:#0b4ea2; }
+
+.header, .so-block {
+  background:#fff;
+  padding:15px;
+  border-radius:6px;
+  margin-bottom:20px;
+  border-left:5px solid #ff8c00;
+}
+
+label { font-size:13px; font-weight:bold; }
+input, select {
+  width:100%;
+  padding:6px;
+  margin-bottom:10px;
+  font-size:13px;
+}
+
+.row { display:flex; gap:10px; }
+.col { flex:1; }
+
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th {
+  background:#0b4ea2;
+  color:#fff;
+  padding:6px;
+}
+td { padding:6px; }
+
+.btn {
+  background:#ff8c00;
+  color:#fff;
+  border:none;
+  padding:6px 12px;
+  border-radius:4px;
+  cursor:pointer;
+}
+.btn-blue { background:#0b4ea2; }
+.btn-danger { background:#e74c3c; }
+
+.total {
+  margin-top:10px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Form Pengajuan Estimasi Dana</h2>
+
+<div class="header">
+  <div class="row">
+    <div class="col">
+      <label>PIC</label>
+      <select id="pic">
+        <option value="">-- pilih --</option>
+      </select>
+    </div>
+
+    <div class="col">
+      <label>Belongs To</label>
+      <select id="belongsTo">
+        <option value="">-- pilih --</option>
+        <option>Ngupit</option>
+        <option>Paksi</option>
+      </select>
+    </div>
+
+    <div class="col">
+      <label>Company Name</label>
+      <select id="companyName">
+        <option value="">-- pilih company --</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div id="soContainer"></div>
+
+<button class="btn btn-blue" onclick="addSO()">+ Tambah SO</button>
+<br><br>
+<button class="btn" id="btnSubmit" onclick="submitData()">SUBMIT</button>
+
+<!-- ================= SCRIPT ================= -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -203,5 +300,9 @@ document.addEventListener("DOMContentLoaded", function () {
   if (soContainer) addSO();
 
 });
-</script>
+  </script>
+
+</body>
+</html>
+
 
