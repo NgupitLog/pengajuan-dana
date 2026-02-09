@@ -6,14 +6,14 @@
 <title>Form Pengajuan Estimasi Dana</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
+body{
+  font-family:Arial,sans-serif;
   background:#f4f6f8;
   padding:20px;
 }
-h2 { color:#0b4ea2; }
+h2{color:#0b4ea2}
 
-.header, .so-block {
+.header,.so-block{
   background:#fff;
   padding:15px;
   border-radius:6px;
@@ -21,34 +21,29 @@ h2 { color:#0b4ea2; }
   border-left:5px solid #ff8c00;
 }
 
-label { font-size:13px; font-weight:bold; }
-input, select {
+label{font-size:13px;font-weight:bold}
+input,select{
   width:100%;
   padding:6px;
-  margin-bottom:8px;
+  margin-bottom:6px;
   font-size:13px;
 }
 
-.row { display:flex; gap:10px; flex-wrap:wrap; }
-.col { flex:1; }
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.col{flex:1}
+.col.so{flex:2}
+.col.bl{flex:2}
+.col.eta{flex:1.4}
+.col.ship{flex:1}
+.col.qty{flex:.8}
 
-.col.so { flex:2 }
-.col.bl { flex:2 }
-.col.eta { flex:1.4 }
-.col.ship { flex:1 }
-.col.qty { flex:0.8 }
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#0b4ea2;color:#fff;padding:6px}
+td{padding:6px}
 
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-th {
-  background:#0b4ea2;
-  color:#fff;
-  padding:6px;
-}
-td { padding:6px; }
+td.aksi{text-align:center;vertical-align:middle}
 
-td.aksi { text-align:center; vertical-align:middle; }
-
-.btn {
+.btn{
   background:#ff8c00;
   color:#fff;
   border:none;
@@ -56,20 +51,20 @@ td.aksi { text-align:center; vertical-align:middle; }
   border-radius:4px;
   cursor:pointer;
 }
-.btn-blue { background:#0b4ea2; }
-.btn-danger {
+.btn-blue{background:#0b4ea2}
+.btn-danger{
   background:#e74c3c;
   padding:4px 10px;
   line-height:1;
 }
 
-.total { margin-top:8px; font-weight:bold; }
+.total{margin-top:8px;font-weight:bold}
 
-#companySearch { margin-bottom:4px; }
+#companySearch{margin-bottom:4px}
 
-@media (max-width:768px){
-  .row { flex-direction:column; }
-  .btn { width:100%; }
+@media(max-width:768px){
+  .row{flex-direction:column}
+  .btn{width:100%}
 }
 </style>
 </head>
@@ -109,35 +104,31 @@ td.aksi { text-align:center; vertical-align:middle; }
 <button class="btn" id="btnSubmit">SUBMIT</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded",()=>{
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7iYopJE_fuA7VmDk0PpBd-ZelViruUBKHESXOOdLFCdqgg1wZsiTziTh88kRmnJnjuw/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbz7iYopJE_fuA7VmDk0PpBd-ZelViruUBKHESXOOdLFCdqgg1wZsiTziTh88kRmnJnjuw/exec";
+const MONTH_ID=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
-const pic = document.getElementById("pic");
-const companySearch = document.getElementById("companySearch");
-const companySelect = document.getElementById("companyName");
-const soContainer = document.getElementById("soContainer");
-const btnAddSO = document.getElementById("btnAddSO");
-const btnSubmit = document.getElementById("btnSubmit");
+const pic=document.getElementById("pic");
+const belongsTo=document.getElementById("belongsTo");
+const companySearch=document.getElementById("companySearch");
+const companySelect=document.getElementById("companyName");
+const soContainer=document.getElementById("soContainer");
+const btnAddSO=document.getElementById("btnAddSO");
+const btnSubmit=document.getElementById("btnSubmit");
 
-let companyList = [];
-let submitting = false;
-
-/* MONTH ID */
-const MONTH_ID = [
-  "Januari","Februari","Maret","April","Mei","Juni",
-  "Juli","Agustus","September","Oktober","November","Desember"
-];
+let companyList=[];
+let submitting=false;
 
 /* LOAD PIC */
-fetch(SCRIPT_URL+"?type=pic")
-  .then(r=>r.json())
-  .then(d=>d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`)));
+fetch(SCRIPT_URL+"?type=pic").then(r=>r.json()).then(d=>{
+  d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`));
+});
 
 /* LOAD COMPANY */
-fetch(SCRIPT_URL+"?type=company")
-  .then(r=>r.json())
-  .then(d=>{ companyList=d; renderCompany(d); });
+fetch(SCRIPT_URL+"?type=company").then(r=>r.json()).then(d=>{
+  companyList=d;renderCompany(d);
+});
 
 function renderCompany(list){
   companySelect.innerHTML="";
@@ -155,10 +146,10 @@ companySelect.onchange=()=>{
 };
 companySearch.onfocus=()=>companySelect.style.display="block";
 
-/* FORMAT TANGGAL */
-function formatTanggal(value){
-  if(!value) return "";
-  const d = new Date(value);
+/* FORMAT ETA */
+function formatTanggal(val){
+  if(!val) return "";
+  const d=new Date(val);
   return `${d.getDate()} ${MONTH_ID[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -171,15 +162,13 @@ function addSO(){
   <h3>Detail SO</h3>
 
   <div class="row">
-    <div class="col so"><label>SO Number</label><input></div>
-    <div class="col bl"><label>BL / AJU</label><input></div>
-
+    <div class="col so"><label>SO Number</label><input class="soNumber"></div>
+    <div class="col bl"><label>BL / AJU</label><input class="blAju"></div>
     <div class="col eta">
       <label>ETA</label>
       <input type="date" class="etaRaw">
-      <input class="etaText" placeholder="DD Bulan YYYY" readonly>
+      <input class="etaText" readonly placeholder="DD Bulan YYYY">
     </div>
-
     <div class="col ship"><label>FCL/LCL</label><select><option>FCL</option><option>LCL</option></select></div>
     <div class="col qty"><label>QTY</label><input></div>
   </div>
@@ -197,9 +186,9 @@ function addSO(){
   so.querySelector(".btn-danger").onclick=()=>so.remove();
   so.querySelector(".addBiaya").onclick=()=>addItem(so);
 
-  const raw = so.querySelector(".etaRaw");
-  const text = so.querySelector(".etaText");
-  raw.onchange = () => text.value = formatTanggal(raw.value);
+  const raw=so.querySelector(".etaRaw");
+  const text=so.querySelector(".etaText");
+  raw.onchange=()=>text.value=formatTanggal(raw.value);
 
   addItem(so);
 }
@@ -222,21 +211,25 @@ function calc(so){
   so.querySelector(".total span").innerText=t.toLocaleString("id-ID");
 }
 
-/* SUBMIT LOCK */
+/* SUBMIT LOCK + SEND */
 btnSubmit.onclick=()=>{
   if(submitting) return;
   submitting=true;
-  btnSubmit.innerText="Mengirim...";
   btnSubmit.disabled=true;
+  btnSubmit.innerText="Mengirim...";
 
-  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({ok:true})})
-    .then(()=>alert("BERHASIL"))
-    .catch(()=>alert("GAGAL"))
-    .finally(()=>{
-      submitting=false;
-      btnSubmit.innerText="SUBMIT";
-      btnSubmit.disabled=false;
-    });
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    mode:"no-cors",
+    body:JSON.stringify({submit:true})
+  })
+  .then(()=>alert("BERHASIL (data terkirim)"))
+  .catch(()=>alert("GAGAL"))
+  .finally(()=>{
+    submitting=false;
+    btnSubmit.disabled=false;
+    btnSubmit.innerText="SUBMIT";
+  });
 };
 
 btnAddSO.onclick=addSO;
