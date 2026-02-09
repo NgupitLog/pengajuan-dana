@@ -32,10 +32,9 @@ input, select {
 .row { display:flex; gap:10px; flex-wrap:wrap; }
 .col { flex:1; }
 
-/* ukuran kolom SO */
 .col.so { flex:2 }
 .col.bl { flex:2 }
-.col.eta { flex:1.2 }
+.col.eta { flex:1.4 }
 .col.ship { flex:1 }
 .col.qty { flex:0.8 }
 
@@ -66,10 +65,8 @@ td.aksi { text-align:center; vertical-align:middle; }
 
 .total { margin-top:8px; font-weight:bold; }
 
-/* company search */
 #companySearch { margin-bottom:4px; }
 
-/* MOBILE */
 @media (max-width:768px){
   .row { flex-direction:column; }
   .btn { width:100%; }
@@ -126,38 +123,44 @@ const btnSubmit = document.getElementById("btnSubmit");
 let companyList = [];
 let submitting = false;
 
+/* MONTH ID */
+const MONTH_ID = [
+  "Januari","Februari","Maret","April","Mei","Juni",
+  "Juli","Agustus","September","Oktober","November","Desember"
+];
+
 /* LOAD PIC */
-fetch(SCRIPT_URL+"?type=pic").then(r=>r.json()).then(d=>{
-  d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`));
-});
+fetch(SCRIPT_URL+"?type=pic")
+  .then(r=>r.json())
+  .then(d=>d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`)));
 
 /* LOAD COMPANY */
-fetch(SCRIPT_URL+"?type=company").then(r=>r.json()).then(d=>{
-  companyList=d;
-  renderCompany(d);
-});
+fetch(SCRIPT_URL+"?type=company")
+  .then(r=>r.json())
+  .then(d=>{ companyList=d; renderCompany(d); });
 
 function renderCompany(list){
   companySelect.innerHTML="";
-  list.forEach(v=>{
-    companySelect.insertAdjacentHTML("beforeend",`<option>${v}</option>`);
-  });
+  list.forEach(v=>companySelect.insertAdjacentHTML("beforeend",`<option>${v}</option>`));
 }
 
 /* SEARCH + AUTO HIDE */
-companySearch.addEventListener("input",()=>{
+companySearch.oninput=()=>{
   companySelect.style.display="block";
   renderCompany(companyList.filter(c=>c.toLowerCase().includes(companySearch.value.toLowerCase())));
-});
-
-companySelect.addEventListener("change",()=>{
+};
+companySelect.onchange=()=>{
   companySearch.value=companySelect.value;
   companySelect.style.display="none";
-});
+};
+companySearch.onfocus=()=>companySelect.style.display="block";
 
-companySearch.addEventListener("focus",()=>{
-  companySelect.style.display="block";
-});
+/* FORMAT TANGGAL */
+function formatTanggal(value){
+  if(!value) return "";
+  const d = new Date(value);
+  return `${d.getDate()} ${MONTH_ID[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 /* ADD SO */
 function addSO(){
@@ -168,9 +171,15 @@ function addSO(){
   <h3>Detail SO</h3>
 
   <div class="row">
-    <div class="col so"><label>SO Number</label><input class="soNumber"></div>
-    <div class="col bl"><label>BL / AJU</label><input class="blAju"></div>
-    <div class="col eta"><label>ETA</label><input></div>
+    <div class="col so"><label>SO Number</label><input></div>
+    <div class="col bl"><label>BL / AJU</label><input></div>
+
+    <div class="col eta">
+      <label>ETA</label>
+      <input type="date" class="etaRaw">
+      <input class="etaText" placeholder="DD Bulan YYYY" readonly>
+    </div>
+
     <div class="col ship"><label>FCL/LCL</label><select><option>FCL</option><option>LCL</option></select></div>
     <div class="col qty"><label>QTY</label><input></div>
   </div>
@@ -187,13 +196,18 @@ function addSO(){
 
   so.querySelector(".btn-danger").onclick=()=>so.remove();
   so.querySelector(".addBiaya").onclick=()=>addItem(so);
+
+  const raw = so.querySelector(".etaRaw");
+  const text = so.querySelector(".etaText");
+  raw.onchange = () => text.value = formatTanggal(raw.value);
+
   addItem(so);
 }
 
 function addItem(so){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-  <td><select><option>DO</option><option>Storage</option><option>Handling</option></select></td>
+  <td><select><option>DO</option><option>Storage</option><option>Handling</option><option>Trucking</option><option>LOLO</option><option>Others</option></select></td>
   <td><input type="number" value="0"></td>
   <td class="aksi"><button class="btn btn-danger">X</button></td>`;
   so.querySelector(".items").appendChild(tr);
@@ -208,7 +222,7 @@ function calc(so){
   so.querySelector(".total span").innerText=t.toLocaleString("id-ID");
 }
 
-/* SUBMIT LOCK + SEND */
+/* SUBMIT LOCK */
 btnSubmit.onclick=()=>{
   if(submitting) return;
   submitting=true;
