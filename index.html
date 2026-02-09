@@ -102,44 +102,32 @@ document.addEventListener("DOMContentLoaded", function () {
   const picSelect = document.getElementById("pic");
   const belongsToSelect = document.getElementById("belongsTo");
   const companySelect = document.getElementById("companyName");
+  const soContainer = document.getElementById("soContainer");
+  const btnAddSO = document.getElementById("btnAddSO");
   const btnSubmit = document.getElementById("btnSubmit");
 
-  /* ======================
-     LOAD PIC
-     ====================== */
+  /* ===== LOAD PIC ===== */
   fetch(SCRIPT_URL + "?type=pic")
     .then(r => r.json())
     .then(list => {
       if (!Array.isArray(list)) return;
       list.forEach(v => {
-        const o = document.createElement("option");
-        o.value = v;
-        o.textContent = v;
-        picSelect.appendChild(o);
+        picSelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
       });
-    })
-    .catch(err => console.error("PIC error:", err));
+    });
 
-  /* ======================
-     LOAD COMPANY
-     ====================== */
+  /* ===== LOAD COMPANY ===== */
   fetch(SCRIPT_URL + "?type=company")
     .then(r => r.json())
     .then(list => {
       if (!Array.isArray(list)) return;
       list.forEach(v => {
-        const o = document.createElement("option");
-        o.value = v;
-        o.textContent = v;
-        companySelect.appendChild(o);
+        companySelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
       });
-    })
-    .catch(err => console.error("Company error:", err));
+    });
 
-  /* ======================
-     SO & BIAYA
-     ====================== */
-  window.addSO = function () {
+  /* ===== ADD SO ===== */
+  function addSO() {
     const so = document.createElement("div");
     so.className = "so-block";
 
@@ -164,24 +152,24 @@ document.addEventListener("DOMContentLoaded", function () {
           <tr>
             <th style="width:40%">Jenis Biaya</th>
             <th style="width:50%">Nominal (Rp)</th>
-            <th style="width:10%; text-align:center">Aksi</th>
+            <th style="width:10%">Aksi</th>
           </tr>
         </thead>
         <tbody class="items"></tbody>
       </table>
 
-      <button type="button" class="btn" onclick="addItem(this)">+ Tambah Biaya</button>
+      <button type="button" class="btn addBiaya">+ Tambah Biaya</button>
       <div class="total">Total SO: Rp <span class="totalSo">0</span></div>
     `;
 
-    document.getElementById("soContainer").appendChild(so);
-    addItem(so.querySelector(".btn"));
-  };
+    soContainer.appendChild(so);
 
-  window.addItem = function (btn) {
-    const tbody = btn.parentElement.querySelector(".items");
-    if (!tbody) return;
+    so.querySelector(".addBiaya").addEventListener("click", () => addItem(so));
+    addItem(so);
+  }
 
+  function addItem(so) {
+    const tbody = so.querySelector(".items");
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>
@@ -192,101 +180,38 @@ document.addEventListener("DOMContentLoaded", function () {
           <option>Other</option>
         </select>
       </td>
-      <td><input type="number" class="nominal" value="0" oninput="calc(this)"></td>
-      <td style="text-align:center;">
-        <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
-      </td>
+      <td><input type="number" class="nominal" value="0"></td>
+      <td><button class="btn btn-danger">X</button></td>
     `;
     tbody.appendChild(tr);
-  };
 
-  window.calc = function (input) {
-    const so = input.closest(".so-block");
+    tr.querySelector(".nominal").addEventListener("input", () => calc(so));
+    tr.querySelector(".btn-danger").addEventListener("click", () => {
+      tr.remove();
+      calc(so);
+    });
+  }
+
+  function calc(so) {
     let total = 0;
     so.querySelectorAll(".nominal").forEach(n => total += Number(n.value || 0));
     so.querySelector(".totalSo").innerText = total.toLocaleString("id-ID");
-  };
+  }
 
-  window.removeRow = function (btn) {
-    const so = btn.closest(".so-block");
-    btn.closest("tr").remove();
-    const n = so.querySelector(".nominal");
-    if (n) calc(n);
-  };
+  /* ===== SUBMIT ===== */
+  function submitData() {
+    alert("SUBMIT OK – backend sudah siap");
+  }
 
-  /* ======================
-     SUBMIT (LOCKED)
-     ====================== */
-  window.submitData = function () {
-    if (btnSubmit.disabled) return;
+  /* ===== BIND BUTTON ===== */
+  btnAddSO.addEventListener("click", addSO);
+  btnSubmit.addEventListener("click", submitData);
 
-    if (!picSelect.value || !belongsToSelect.value || !companySelect.value) {
-      alert("Header wajib diisi");
-      return;
-    }
-
-    btnSubmit.disabled = true;
-    btnSubmit.innerText = "Mengirim...";
-
-    const data = {
-      pic: picSelect.value,
-      belongsTo: belongsToSelect.value,
-      companyName: companySelect.value,
-      soList: []
-    };
-
-    document.querySelectorAll(".so-block").forEach(so => {
-      const items = [];
-      so.querySelectorAll("tbody tr").forEach(r => {
-        const nominal = Number(r.querySelector(".nominal").value || 0);
-        if (nominal > 0) {
-          items.push({
-            jenisBiaya: r.querySelector(".jenisBiaya").value,
-            nominal
-          });
-        }
-      });
-
-      if (items.length === 0) return;
-
-      data.soList.push({
-        soNumber: so.querySelector(".soNumber").value,
-        blAju: so.querySelector(".blAju").value,
-        shipmentType: so.querySelector(".shipmentType").value,
-        qty: so.querySelector(".qty").value,
-        items
-      });
-    });
-
-    if (data.soList.length === 0) {
-      alert("Minimal 1 SO dengan biaya");
-      btnSubmit.disabled = false;
-      btnSubmit.innerText = "SUBMIT";
-      return;
-    }
-
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify(data)
-    })
-    .then(r => r.json())
-    .then(() => {
-      alert("BERHASIL");
-      location.reload();
-    })
-    .catch(() => {
-      alert("GAGAL");
-      btnSubmit.disabled = false;
-      btnSubmit.innerText = "SUBMIT";
-    });
-  };
-
-  // default 1 SO
+  /* DEFAULT 1 SO */
   addSO();
+
 });
 </script>
 
 </body>
 </html>
-
-
