@@ -95,7 +95,7 @@ td { padding:6px; }
 <button class="btn" id="btnSubmit">SUBMIT</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
 
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLS1VOGQkYqBTkyJTtwA22yldbHC1SCmyvmXPKsa1Yl8IOFUVfIoL6XQcOi9jFVRqNVQ/exec";
 
@@ -103,45 +103,204 @@ document.addEventListener("DOMContentLoaded", () => {
   const belongsToSelect = document.getElementById("belongsTo");
   const companySelect = document.getElementById("companyName");
   const soContainer = document.getElementById("soContainer");
-  const btnSubmit = document.getElementById("btnSubmit");
-  const btnAddSO = document.getElementById("btnAddSO");
 
-  /* LOAD PIC */
-  fetch(SCRIPT_URL + "?type=pic")
-    .then(r => r.json())
-    .then(list => list.forEach(v =>
-      picSelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`)
-    ));
+  // 🔒 fallback biar gak crash walau tombol belum ada
+  const btnSubmit = document.getElementById("btnSubmit") || {
+    disabled: false,
+    innerText: "SUBMIT"
+  };
 
-  /* LOAD COMPANY */
-  fetch(SCRIPT_URL + "?type=company")
-    .then(r => r.json())
-    .then(list => list.forEach(v =>
-      companySelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`)
-    ));
-
-  function addSO() {
-    const so = document.createElement("div");
-    so.className = "so-block";
-    so.innerHTML = `
-      <h3>Detail SO</h3>
-      <input class="soNumber" placeholder="SO Number">
-      <input class="blAju" placeholder="BL / AJU">
-      <select class="shipmentType"><option>FCL</option><option>LCL</option></select>
-      <input class="qty" placeholder="QTY">
-    `;
-    soContainer.appendChild(so);
+  /* ======================
+     LOAD PIC
+     ====================== */
+  if (picSelect) {
+    fetch(SCRIPT_URL + "?type=pic")
+      .then(r => r.json())
+      .then(list => {
+        if (!Array.isArray(list)) return;
+        list.forEach(v => {
+          const o = document.createElement("option");
+          o.value = v;
+          o.textContent = v;
+          picSelect.appendChild(o);
+        });
+      })
+      .catch(err => console.error("PIC error:", err));
   }
 
-  btnAddSO.addEventListener("click", addSO);
+  /* ======================
+     LOAD COMPANY
+     ====================== */
+  if (companySelect) {
+    fetch(SCRIPT_URL + "?type=company")
+      .then(r => r.json())
+      .then(list => {
+        if (!Array.isArray(list)) return;
+        list.forEach(v => {
+          const o = document.createElement("option");
+          o.value = v;
+          o.textContent = v;
+          companySelect.appendChild(o);
+        });
+      })
+      .catch(err => console.error("Company error:", err));
+  }
 
-  btnSubmit.addEventListener("click", () => {
-    alert("SUBMIT OK (logic backend sudah ada)");
-  });
+  /* ======================
+     SO & BIAYA
+     ====================== */
+  window.addSO = function () {
+    if (!soContainer) return;
 
-  addSO(); // default 1
+    const so = document.createElement("div");
+    so.className = "so-block";
+
+    so.innerHTML = `
+      <h3>Detail SO</h3>
+
+      <div class="row">
+        <div class="col"><label>SO Number</label><input class="soNumber"></div>
+        <div class="col"><label>BL / AJU</label><input class="blAju"></div>
+        <div class="col">
+          <label>FCL / LCL</label>
+          <select class="shipmentType">
+            <option>FCL</option>
+            <option>LCL</option>
+          </select>
+        </div>
+        <div class="col"><label>QTY</label><input class="qty"></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40%">Jenis Biaya</th>
+            <th style="width:50%">Nominal (Rp)</th>
+            <th style="width:10%; text-align:center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="items"></tbody>
+      </table>
+
+      <button type="button" class="btn" onclick="addItem(this)">+ Tambah Biaya</button>
+      <div class="total">Total SO: Rp <span class="totalSo">0</span></div>
+    `;
+
+    soContainer.appendChild(so);
+    addItem(so.querySelector(".btn"));
+  };
+
+  window.addItem = function (btn) {
+    const tbody = btn?.parentElement?.querySelector(".items");
+    if (!tbody) return;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>
+        <select class="jenisBiaya">
+          <option>Storage</option>
+          <option>Handling</option>
+          <option>Delivery</option>
+          <option>Other</option>
+        </select>
+      </td>
+      <td><input type="number" class="nominal" value="0" oninput="calc(this)"></td>
+      <td style="text-align:center;">
+        <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  };
+
+  window.calc = function (input) {
+    const so = input.closest(".so-block");
+    if (!so) return;
+    let total = 0;
+    so.querySelectorAll(".nominal").forEach(n => total += Number(n.value || 0));
+    so.querySelector(".totalSo").innerText = total.toLocaleString("id-ID");
+  };
+
+  window.removeRow = function (btn) {
+    const tr = btn.closest("tr");
+    const so = btn.closest(".so-block");
+    tr?.remove();
+    const n = so?.querySelector(".nominal");
+    if (n) calc(n);
+  };
+
+  /* ======================
+     SUBMIT (ANTI DOUBLE & ANTI BLANK)
+     ====================== */
+  window.submitData = function () {
+    if (btnSubmit.disabled) return;
+
+    if (!picSelect?.value || !belongsToSelect?.value || !companySelect?.value) {
+      alert("Header wajib diisi");
+      return;
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.innerText = "Mengirim...";
+
+    const data = {
+      pic: picSelect.value,
+      belongsTo: belongsToSelect.value,
+      companyName: companySelect.value,
+      soList: []
+    };
+
+    document.querySelectorAll(".so-block").forEach(so => {
+      const items = [];
+      so.querySelectorAll("tbody tr").forEach(r => {
+        const nominal = Number(r.querySelector(".nominal")?.value || 0);
+        if (nominal > 0) {
+          items.push({
+            jenisBiaya: r.querySelector(".jenisBiaya").value,
+            nominal
+          });
+        }
+      });
+
+      if (items.length === 0) return;
+
+      data.soList.push({
+        soNumber: so.querySelector(".soNumber")?.value || "",
+        blAju: so.querySelector(".blAju")?.value || "",
+        shipmentType: so.querySelector(".shipmentType")?.value || "",
+        qty: so.querySelector(".qty")?.value || "",
+        items
+      });
+    });
+
+    if (data.soList.length === 0) {
+      alert("Minimal 1 SO dengan biaya");
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = "SUBMIT";
+      return;
+    }
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(() => {
+      alert("BERHASIL");
+      location.reload();
+    })
+    .catch(() => {
+      alert("GAGAL");
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = "SUBMIT";
+    });
+  };
+
+  // default 1 SO (AMAN)
+  if (soContainer) addSO();
+
 });
 </script>
 
 </body>
 </html>
+
