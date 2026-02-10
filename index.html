@@ -40,8 +40,7 @@ input,select{
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th{background:#0b4ea2;color:#fff;padding:6px}
 td{padding:6px}
-
-td.aksi{text-align:center;vertical-align:middle}
+td.aksi{text-align:center}
 
 .btn{
   background:#ff8c00;
@@ -52,14 +51,9 @@ td.aksi{text-align:center;vertical-align:middle}
   cursor:pointer;
 }
 .btn-blue{background:#0b4ea2}
-.btn-danger{
-  background:#e74c3c;
-  padding:4px 10px;
-  line-height:1;
-}
+.btn-danger{background:#e74c3c}
 
 .total{margin-top:8px;font-weight:bold}
-
 #companySearch{margin-bottom:4px}
 
 @media(max-width:768px){
@@ -135,7 +129,7 @@ function renderCompany(list){
   list.forEach(v=>companySelect.insertAdjacentHTML("beforeend",`<option>${v}</option>`));
 }
 
-/* SEARCH + AUTO HIDE */
+/* SEARCH */
 companySearch.oninput=()=>{
   companySelect.style.display="block";
   renderCompany(companyList.filter(c=>c.toLowerCase().includes(companySearch.value.toLowerCase())));
@@ -144,7 +138,6 @@ companySelect.onchange=()=>{
   companySearch.value=companySelect.value;
   companySelect.style.display="none";
 };
-companySearch.onfocus=()=>companySelect.style.display="block";
 
 /* FORMAT ETA */
 function formatTanggal(val){
@@ -167,10 +160,10 @@ function addSO(){
     <div class="col eta">
       <label>ETA</label>
       <input type="date" class="etaRaw">
-      <input class="etaText" readonly placeholder="DD Bulan YYYY">
+      <input class="etaText" readonly>
     </div>
-    <div class="col ship"><label>FCL/LCL</label><select><option>FCL</option><option>LCL</option></select></div>
-    <div class="col qty"><label>QTY</label><input></div>
+    <div class="col ship"><label>FCL/LCL</label><select class="shipmentType"><option>FCL</option><option>LCL</option></select></div>
+    <div class="col qty"><label>QTY</label><input class="qty"></div>
   </div>
 
   <table>
@@ -196,34 +189,60 @@ function addSO(){
 function addItem(so){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-  <td><select><option>DO</option><option>Storage</option><option>Handling</option><option>Trucking</option><option>LOLO</option><option>Others</option></select></td>
-  <td><input type="number" value="0"></td>
+  <td><select class="jenisBiaya"><option>DO</option><option>Storage</option><option>Handling</option><option>Trucking</option><option>LOLO</option><option>Others</option></select></td>
+  <td><input type="number" class="nominal" value="0"></td>
   <td class="aksi"><button class="btn btn-danger">X</button></td>`;
   so.querySelector(".items").appendChild(tr);
 
-  tr.querySelector("input").oninput=()=>calc(so);
+  tr.querySelector(".nominal").oninput=()=>calc(so);
   tr.querySelector("button").onclick=()=>{tr.remove();calc(so)};
 }
 
 function calc(so){
   let t=0;
-  so.querySelectorAll("tbody input").forEach(i=>t+=Number(i.value||0));
+  so.querySelectorAll(".nominal").forEach(i=>t+=Number(i.value||0));
   so.querySelector(".total span").innerText=t.toLocaleString("id-ID");
 }
 
-/* SUBMIT LOCK + SEND */
+/* SUBMIT — KIRIM DATA BENAR */
 btnSubmit.onclick=()=>{
   if(submitting) return;
   submitting=true;
   btnSubmit.disabled=true;
   btnSubmit.innerText="Mengirim...";
 
+  const data={
+    pic:pic.value,
+    belongsTo:belongsTo.value,
+    companyName:companySearch.value,
+    soList:[]
+  };
+
+  document.querySelectorAll(".so-block").forEach(so=>{
+    const items=[];
+    so.querySelectorAll(".items tr").forEach(r=>{
+      items.push({
+        jenisBiaya:r.querySelector(".jenisBiaya").value,
+        nominal:Number(r.querySelector(".nominal").value||0)
+      });
+    });
+
+    data.soList.push({
+      soNumber:so.querySelector(".soNumber").value,
+      blAju:so.querySelector(".blAju").value,
+      eta:so.querySelector(".etaText").value,
+      shipmentType:so.querySelector(".shipmentType").value,
+      qty:so.querySelector(".qty").value,
+      items
+    });
+  });
+
   fetch(SCRIPT_URL,{
     method:"POST",
     mode:"no-cors",
-    body:JSON.stringify({submit:true})
+    body:JSON.stringify(data)
   })
-  .then(()=>alert("BERHASIL (data terkirim)"))
+  .then(()=>alert("BERHASIL — cek spreadsheet"))
   .catch(()=>alert("GAGAL"))
   .finally(()=>{
     submitting=false;
@@ -240,5 +259,3 @@ addSO();
 
 </body>
 </html>
-
-
