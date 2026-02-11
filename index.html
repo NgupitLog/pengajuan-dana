@@ -129,10 +129,6 @@ td.aksi{text-align:center}
 document.addEventListener("DOMContentLoaded", () => {
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdBjLnHDR_xFM_kcjXUg740s7R9y4zZOQVu6WV9sAFZ7CPJ9NdpjIVOzrxuZfZkcn8xQ/exec";
-const MONTH_ID = [
-  "Januari","Februari","Maret","April","Mei","Juni",
-  "Juli","Agustus","September","Oktober","November","Desember"
-];
 
 const pic = document.getElementById("pic");
 const belongsTo = document.getElementById("belongsTo");
@@ -186,13 +182,6 @@ companySelect.onchange=()=>{
   companySelect.style.display="none";
 };
 
-/* FORMAT ETA */
-function formatTanggal(val){
-  if(!val) return "";
-  const d=new Date(val);
-  return `${d.getDate()} ${MONTH_ID[d.getMonth()]} ${d.getFullYear()}`;
-}
-
 /* ADD SO */
 function addSO(){
   const so=document.createElement("div");
@@ -206,12 +195,6 @@ function addSO(){
       <div class="col so"><label>SO Number</label><input class="soNumber"></div>
       <div class="col bl"><label>BL / AJU</label><input class="blAju"></div>
 
-      <div class="col eta">
-        <label>ETA</label>
-        <input type="date" class="etaRaw">
-        <input class="etaText" readonly>
-      </div>
-
       <div class="col ship">
         <label>FCL/LCL</label>
         <select class="shipmentType">
@@ -222,7 +205,7 @@ function addSO(){
 
       <div class="col qty">
         <label>QTY</label>
-        <input class="qty">
+        <input type="number" class="qtyInput">
       </div>
     </div>
 
@@ -245,10 +228,6 @@ function addSO(){
 
   so.querySelector(".btn-danger").onclick=()=>so.remove();
   so.querySelector(".addBiaya").onclick=()=>addItem(so);
-
-  const raw=so.querySelector(".etaRaw");
-  const text=so.querySelector(".etaText");
-  raw.onchange=()=>text.value=formatTanggal(raw.value);
 
   addItem(so);
 }
@@ -313,9 +292,8 @@ btnSubmit.onclick=()=>{
     data.soList.push({
       soNumber:so.querySelector(".soNumber").value,
       blAju:so.querySelector(".blAju").value,
-      eta:so.querySelector(".etaText").value,
       shipmentType:so.querySelector(".shipmentType").value,
-      qty:so.querySelector(".qty").value,
+      qty:Number(so.querySelector(".qtyInput").value||0),
       items
     });
   });
@@ -327,7 +305,7 @@ btnSubmit.onclick=()=>{
   })
   .then(()=>{
     alert("BERHASIL — DATA TERINPUT");
-    location.reload(); // refresh halaman awal
+    location.reload(); // refresh halaman
   })
   .catch(()=>{
     alert("GAGAL");
