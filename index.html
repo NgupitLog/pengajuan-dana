@@ -6,11 +6,7 @@
 <title>Form Pengajuan Estimasi Dana</title>
 
 <style>
-body{
-  font-family:Arial,sans-serif;
-  background:#f4f6f8;
-  padding:20px;
-}
+body{font-family:Arial,sans-serif;background:#f4f6f8;padding:20px}
 h2{color:#0b4ea2}
 
 .header,.so-block{
@@ -22,34 +18,17 @@ h2{color:#0b4ea2}
 }
 
 label{font-size:13px;font-weight:bold}
-
-input,select{
-  width:100%;
-  padding:6px;
-  margin-bottom:6px;
-  font-size:13px;
-}
+input,select{width:100%;padding:6px;margin-bottom:6px;font-size:13px}
 
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .col{flex:1}
 .col.so{flex:2}
 .col.bl{flex:2}
-.col.eta{flex:1.4}
 .col.ship{flex:1}
 .col.qty{flex:.8}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-
-th{
-  background:#0b4ea2;
-  color:#fff;
-  padding:6px;
-}
-
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#0b4ea2;color:#fff;padding:6px}
 td{padding:6px}
 td.aksi{text-align:center}
 
@@ -61,12 +40,10 @@ td.aksi{text-align:center}
   border-radius:4px;
   cursor:pointer;
 }
-
 .btn-blue{background:#0b4ea2}
 .btn-danger{background:#e74c3c}
 
 .total{margin-top:8px;font-weight:bold}
-
 #companySearch{margin-bottom:4px}
 
 @media(max-width:768px){
@@ -82,6 +59,7 @@ td.aksi{text-align:center}
 
 <div class="header">
   <div class="row">
+
     <div class="col">
       <label>PIC</label>
       <select id="pic">
@@ -103,6 +81,7 @@ td.aksi{text-align:center}
       <input id="companySearch" placeholder="Cari company...">
       <select id="companyName" size="5"></select>
     </div>
+
   </div>
 </div>
 
@@ -128,58 +107,57 @@ const btnSubmit = document.getElementById("btnSubmit");
 let companyList = [];
 let submitting = false;
 
-/* LOAD PIC */
-fetch(`${SCRIPT_URL}?type=pic`)
-.then(r=>r.json())
-.then(d=>{
-  if(!Array.isArray(d)) return;
-  d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`);
-});
+/* ================= LOAD PIC ================= */
+fetch(SCRIPT_URL + "?type=pic")
+  .then(res => res.json())
+  .then(data => {
+    if(Array.isArray(data)){
+      data.forEach(v=>{
+        pic.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
+      });
+    }
+  })
+  .catch(err=>{
+    console.log("PIC load error:", err);
+  });
 
-/* LOAD COMPANY */
-fetch(`${SCRIPT_URL}?type=company`)
-.then(r=>r.json())
-.then(d=>{
-  if(!Array.isArray(d)) return;
-  companyList=d;
-  renderCompany(d);
-});
+/* ================= LOAD COMPANY ================= */
+fetch(SCRIPT_URL + "?type=company")
+  .then(res => res.json())
+  .then(data => {
+    if(Array.isArray(data)){
+      companyList = data;
+      renderCompany(data);
+    }
+  })
+  .catch(err=>{
+    console.log("Company load error:", err);
+  });
 
 function renderCompany(list){
   companySelect.innerHTML="";
   list.forEach(v=>{
-    companySelect.insertAdjacentHTML("beforeend",`<option>${v}</option>`);
+    companySelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
   });
 }
 
 /* SEARCH */
-companySearch.oninput=()=>{
-  companySelect.style.display="block";
-  renderCompany(
-    companyList.filter(c=>
-      c.toLowerCase().includes(companySearch.value.toLowerCase())
-    )
+companySearch.addEventListener("input", ()=>{
+  const filtered = companyList.filter(c =>
+    c.toLowerCase().includes(companySearch.value.toLowerCase())
   );
-};
+  renderCompany(filtered);
+  companySelect.style.display="block";
+});
 
-companySelect.onchange=()=>{
-  companySearch.value=companySelect.value;
+companySelect.addEventListener("change", ()=>{
+  companySearch.value = companySelect.value;
   companySelect.style.display="none";
-};
+});
 
-/* FORMAT TANGGAL */
-function formatDate(val){
-  if(!val) return "";
-  const d=new Date(val);
-  const day=String(d.getDate()).padStart(2,'0');
-  const month=String(d.getMonth()+1).padStart(2,'0');
-  const year=d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-/* ADD SO */
+/* ================= ADD SO ================= */
 function addSO(){
-  const so=document.createElement("div");
+  const so = document.createElement("div");
   so.className="so-block";
 
   so.innerHTML=`
@@ -187,12 +165,14 @@ function addSO(){
     <h3>Detail SO</h3>
 
     <div class="row">
-      <div class="col so"><label>SO Number</label><input class="soNumber"></div>
-      <div class="col bl"><label>BL / AJU</label><input class="blAju"></div>
+      <div class="col so">
+        <label>SO Number</label>
+        <input class="soNumber">
+      </div>
 
-      <div class="col eta">
-        <label>ETA</label>
-        <input type="date" class="etaInput">
+      <div class="col bl">
+        <label>BL / AJU</label>
+        <input class="blAju">
       </div>
 
       <div class="col ship">
@@ -205,7 +185,7 @@ function addSO(){
 
       <div class="col qty">
         <label>QTY</label>
-        <input type="text" class="qtyInput" placeholder="Contoh: 1,5 / 2x40 / 850 KG">
+        <input type="text" class="qtyInput">
       </div>
     </div>
 
@@ -226,8 +206,8 @@ function addSO(){
 
   soContainer.appendChild(so);
 
-  so.querySelector(".btn-danger").onclick=()=>so.remove();
-  so.querySelector(".addBiaya").onclick=()=>addItem(so);
+  so.querySelector(".btn-danger").onclick = ()=> so.remove();
+  so.querySelector(".addBiaya").onclick = ()=> addItem(so);
 
   addItem(so);
 }
@@ -245,10 +225,14 @@ function addItem(so){
     <td><input type="number" class="nominal" value="0"></td>
     <td class="aksi"><button class="btn btn-danger">X</button></td>
   `;
+
   so.querySelector(".items").appendChild(tr);
 
   tr.querySelector(".nominal").oninput=()=>calc(so);
-  tr.querySelector("button").onclick=()=>{tr.remove();calc(so)};
+  tr.querySelector("button").onclick=()=>{
+    tr.remove();
+    calc(so);
+  };
 }
 
 function calc(so){
@@ -260,7 +244,7 @@ function calc(so){
     total.toLocaleString("id-ID");
 }
 
-/* SUBMIT */
+/* ================= SUBMIT ================= */
 btnSubmit.onclick=()=>{
   if(submitting) return;
 
@@ -284,15 +268,11 @@ btnSubmit.onclick=()=>{
       });
     });
 
-    let rawQty=so.querySelector(".qtyInput").value||"";
-    let cleanQty=rawQty.replace(",", ".");
-
     data.soList.push({
       soNumber:so.querySelector(".soNumber").value,
       blAju:so.querySelector(".blAju").value,
-      eta:formatDate(so.querySelector(".etaInput").value),
       shipmentType:so.querySelector(".shipmentType").value,
-      qty:cleanQty,
+      qty:so.querySelector(".qtyInput").value,
       items
     });
   });
@@ -308,6 +288,8 @@ btnSubmit.onclick=()=>{
   })
   .catch(()=>{
     alert("GAGAL");
+  })
+  .finally(()=>{
     submitting=false;
     btnSubmit.disabled=false;
     btnSubmit.innerText="SUBMIT";
