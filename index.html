@@ -24,6 +24,7 @@ input,select{width:100%;padding:6px;margin-bottom:6px;font-size:13px}
 .col{flex:1}
 .col.so{flex:2}
 .col.bl{flex:2}
+.col.eta{flex:1.4}
 .col.ship{flex:1}
 .col.qty{flex:.8}
 
@@ -107,32 +108,36 @@ const btnSubmit = document.getElementById("btnSubmit");
 let companyList = [];
 let submitting = false;
 
-/* ================= LOAD PIC ================= */
-fetch(SCRIPT_URL + "?type=pic")
-  .then(res => res.json())
-  .then(data => {
-    if(Array.isArray(data)){
-      data.forEach(v=>{
-        pic.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
-      });
-    }
-  })
-  .catch(err=>{
-    console.log("PIC load error:", err);
-  });
+/* ===== FORMAT DATE ===== */
+function formatDate(val){
+  if(!val) return "";
+  const d = new Date(val);
+  const day = String(d.getDate()).padStart(2,'0');
+  const month = String(d.getMonth()+1).padStart(2,'0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
-/* ================= LOAD COMPANY ================= */
+/* LOAD PIC */
+fetch(SCRIPT_URL + "?type=pic")
+.then(res => res.json())
+.then(data=>{
+  if(Array.isArray(data)){
+    data.forEach(v=>{
+      pic.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
+    });
+  }
+});
+
+/* LOAD COMPANY */
 fetch(SCRIPT_URL + "?type=company")
-  .then(res => res.json())
-  .then(data => {
-    if(Array.isArray(data)){
-      companyList = data;
-      renderCompany(data);
-    }
-  })
-  .catch(err=>{
-    console.log("Company load error:", err);
-  });
+.then(res => res.json())
+.then(data=>{
+  if(Array.isArray(data)){
+    companyList=data;
+    renderCompany(data);
+  }
+});
 
 function renderCompany(list){
   companySelect.innerHTML="";
@@ -141,7 +146,6 @@ function renderCompany(list){
   });
 }
 
-/* SEARCH */
 companySearch.addEventListener("input", ()=>{
   const filtered = companyList.filter(c =>
     c.toLowerCase().includes(companySearch.value.toLowerCase())
@@ -151,13 +155,13 @@ companySearch.addEventListener("input", ()=>{
 });
 
 companySelect.addEventListener("change", ()=>{
-  companySearch.value = companySelect.value;
+  companySearch.value=companySelect.value;
   companySelect.style.display="none";
 });
 
-/* ================= ADD SO ================= */
+/* ADD SO */
 function addSO(){
-  const so = document.createElement("div");
+  const so=document.createElement("div");
   so.className="so-block";
 
   so.innerHTML=`
@@ -175,12 +179,11 @@ function addSO(){
         <input class="blAju">
       </div>
 
-<div class="col eta">
+      <div class="col eta">
         <label>ETA</label>
-        <input type="date" class="etaRaw">
-        <input class="etaText" readonly>
+        <input type="date" class="etaInput">
       </div>
-      
+
       <div class="col ship">
         <label>FCL/LCL</label>
         <select class="shipmentType">
@@ -191,7 +194,7 @@ function addSO(){
 
       <div class="col qty">
         <label>QTY</label>
-        <input type="text" class="qtyInput">
+        <input type="text" class="qtyInput" placeholder="Contoh: 1x40 / 2x20 / 3,5 Ton">
       </div>
     </div>
 
@@ -212,8 +215,8 @@ function addSO(){
 
   soContainer.appendChild(so);
 
-  so.querySelector(".btn-danger").onclick = ()=> so.remove();
-  so.querySelector(".addBiaya").onclick = ()=> addItem(so);
+  so.querySelector(".btn-danger").onclick=()=>so.remove();
+  so.querySelector(".addBiaya").onclick=()=>addItem(so);
 
   addItem(so);
 }
@@ -231,7 +234,6 @@ function addItem(so){
     <td><input type="number" class="nominal" value="0"></td>
     <td class="aksi"><button class="btn btn-danger">X</button></td>
   `;
-
   so.querySelector(".items").appendChild(tr);
 
   tr.querySelector(".nominal").oninput=()=>calc(so);
@@ -246,11 +248,10 @@ function calc(so){
   so.querySelectorAll(".nominal").forEach(i=>{
     total+=Number(i.value||0);
   });
-  so.querySelector(".total span").innerText=
-    total.toLocaleString("id-ID");
+  so.querySelector(".total span").innerText=total.toLocaleString("id-ID");
 }
 
-/* ================= SUBMIT ================= */
+/* SUBMIT */
 btnSubmit.onclick=()=>{
   if(submitting) return;
 
@@ -277,6 +278,7 @@ btnSubmit.onclick=()=>{
     data.soList.push({
       soNumber:so.querySelector(".soNumber").value,
       blAju:so.querySelector(".blAju").value,
+      eta:formatDate(so.querySelector(".etaInput")?.value),
       shipmentType:so.querySelector(".shipmentType").value,
       qty:so.querySelector(".qtyInput").value,
       items
@@ -292,9 +294,7 @@ btnSubmit.onclick=()=>{
     alert("BERHASIL — DATA TERINPUT");
     location.reload();
   })
-  .catch(()=>{
-    alert("GAGAL");
-  })
+  .catch(()=>alert("GAGAL"))
   .finally(()=>{
     submitting=false;
     btnSubmit.disabled=false;
@@ -310,4 +310,3 @@ addSO();
 
 </body>
 </html>
-
