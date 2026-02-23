@@ -21,10 +21,7 @@ h2{color:#0b4ea2}
   border-left:5px solid #ff8c00;
 }
 
-label{
-  font-size:13px;
-  font-weight:bold;
-}
+label{font-size:13px;font-weight:bold}
 
 input,select{
   width:100%;
@@ -33,12 +30,7 @@ input,select{
   font-size:13px;
 }
 
-.row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
+.row{display:flex;gap:10px;flex-wrap:wrap}
 .col{flex:1}
 .col.so{flex:2}
 .col.bl{flex:2}
@@ -73,10 +65,7 @@ td.aksi{text-align:center}
 .btn-blue{background:#0b4ea2}
 .btn-danger{background:#e74c3c}
 
-.total{
-  margin-top:8px;
-  font-weight:bold;
-}
+.total{margin-top:8px;font-weight:bold}
 
 #companySearch{margin-bottom:4px}
 
@@ -93,7 +82,6 @@ td.aksi{text-align:center}
 
 <div class="header">
   <div class="row">
-
     <div class="col">
       <label>PIC</label>
       <select id="pic">
@@ -115,7 +103,6 @@ td.aksi{text-align:center}
       <input id="companySearch" placeholder="Cari company...">
       <select id="companyName" size="5"></select>
     </div>
-
   </div>
 </div>
 
@@ -146,9 +133,7 @@ fetch(`${SCRIPT_URL}?type=pic`)
 .then(r=>r.json())
 .then(d=>{
   if(!Array.isArray(d)) return;
-  d.forEach(v=>{
-    pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`);
-  });
+  d.forEach(v=>pic.insertAdjacentHTML("beforeend",`<option>${v}</option>`);
 });
 
 /* LOAD COMPANY */
@@ -182,6 +167,16 @@ companySelect.onchange=()=>{
   companySelect.style.display="none";
 };
 
+/* FORMAT TANGGAL */
+function formatDate(val){
+  if(!val) return "";
+  const d=new Date(val);
+  const day=String(d.getDate()).padStart(2,'0');
+  const month=String(d.getMonth()+1).padStart(2,'0');
+  const year=d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 /* ADD SO */
 function addSO(){
   const so=document.createElement("div");
@@ -195,6 +190,11 @@ function addSO(){
       <div class="col so"><label>SO Number</label><input class="soNumber"></div>
       <div class="col bl"><label>BL / AJU</label><input class="blAju"></div>
 
+      <div class="col eta">
+        <label>ETA</label>
+        <input type="date" class="etaInput">
+      </div>
+
       <div class="col ship">
         <label>FCL/LCL</label>
         <select class="shipmentType">
@@ -205,7 +205,7 @@ function addSO(){
 
       <div class="col qty">
         <label>QTY</label>
-        <input type="number" class="qtyInput">
+        <input type="text" class="qtyInput" placeholder="Contoh: 1,5 / 2x40 / 850 KG">
       </div>
     </div>
 
@@ -234,7 +234,6 @@ function addSO(){
 
 function addItem(so){
   const tr=document.createElement("tr");
-
   tr.innerHTML=`
     <td>
       <select class="jenisBiaya">
@@ -246,14 +245,10 @@ function addItem(so){
     <td><input type="number" class="nominal" value="0"></td>
     <td class="aksi"><button class="btn btn-danger">X</button></td>
   `;
-
   so.querySelector(".items").appendChild(tr);
 
   tr.querySelector(".nominal").oninput=()=>calc(so);
-  tr.querySelector("button").onclick=()=>{
-    tr.remove();
-    calc(so);
-  };
+  tr.querySelector("button").onclick=()=>{tr.remove();calc(so)};
 }
 
 function calc(so){
@@ -289,11 +284,15 @@ btnSubmit.onclick=()=>{
       });
     });
 
+    let rawQty=so.querySelector(".qtyInput").value||"";
+    let cleanQty=rawQty.replace(",", ".");
+
     data.soList.push({
       soNumber:so.querySelector(".soNumber").value,
       blAju:so.querySelector(".blAju").value,
+      eta:formatDate(so.querySelector(".etaInput").value),
       shipmentType:so.querySelector(".shipmentType").value,
-      qty:Number(so.querySelector(".qtyInput").value||0),
+      qty:cleanQty,
       items
     });
   });
@@ -305,7 +304,7 @@ btnSubmit.onclick=()=>{
   })
   .then(()=>{
     alert("BERHASIL — DATA TERINPUT");
-    location.reload(); // refresh halaman
+    location.reload();
   })
   .catch(()=>{
     alert("GAGAL");
