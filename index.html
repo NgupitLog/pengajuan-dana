@@ -7,10 +7,11 @@
 
 <style>
 body{
-  font-family:Arial,sans-serif;
+  font-family:Arial;
   background:#f4f6f8;
   padding:15px;
 }
+
 h2{color:#0b4ea2}
 
 /* CARD */
@@ -20,9 +21,10 @@ h2{color:#0b4ea2}
   border-radius:8px;
   margin-bottom:15px;
   border-left:5px solid #ff8c00;
+  position:relative;
 }
 
-/* GRID FLEX */
+/* GRID */
 .row{
   display:flex;
   gap:10px;
@@ -30,7 +32,7 @@ h2{color:#0b4ea2}
 }
 
 .col{
-  flex:1 1 150px;
+  flex:1 1 140px;
 }
 
 .col.big{flex:2 1 250px}
@@ -44,22 +46,34 @@ label{
 input,select{
   width:100%;
   padding:7px;
-  margin-top:3px;
-  margin-bottom:6px;
-  font-size:13px;
-  border-radius:4px;
   border:1px solid #ccc;
+  border-radius:4px;
+  font-size:13px;
+}
+
+/* DELETE SO */
+.delete-so{
+  position:absolute;
+  left:10px;
+  top:10px;
+  background:#e74c3c;
+  color:#fff;
+  border:none;
+  border-radius:50%;
+  width:28px;
+  height:28px;
+  cursor:pointer;
 }
 
 /* TABLE */
 table{
   width:100%;
-  border-collapse:collapse;
   margin-top:10px;
+  border-collapse:collapse;
 }
 
 th{
-  background:#0b4ea2;
+  background:#1f5aa6;
   color:#fff;
   padding:6px;
   font-size:12px;
@@ -72,35 +86,32 @@ td{padding:6px}
   background:#ff8c00;
   color:#fff;
   border:none;
-  padding:7px 12px;
+  padding:8px 12px;
   border-radius:5px;
   cursor:pointer;
 }
 
 .btn-blue{background:#0b4ea2}
 
-/* ICON DELETE */
 .btn-icon{
   background:#e74c3c;
   color:#fff;
   border:none;
-  padding:4px 8px;
   border-radius:50%;
+  width:24px;
+  height:24px;
   cursor:pointer;
-  font-size:12px;
 }
 
 /* TOTAL */
 .total{
-  margin-top:8px;
+  margin-top:10px;
   font-weight:bold;
 }
 
-/* MOBILE FIX */
+/* MOBILE */
 @media(max-width:768px){
-  .row{
-    flex-direction:column;
-  }
+  .row{flex-direction:column}
 }
 </style>
 </head>
@@ -114,13 +125,12 @@ td{padding:6px}
 
     <div class="col">
       <label>PIC</label>
-      <select id="pic"><option value="">-- pilih --</option></select>
+      <select id="pic"></select>
     </div>
 
     <div class="col">
       <label>Belongs To</label>
       <select id="belongsTo">
-        <option value="">-- pilih --</option>
         <option>Ngupit</option>
         <option>Paksi</option>
       </select>
@@ -129,7 +139,6 @@ td{padding:6px}
     <div class="col big">
       <label>Company Name</label>
       <input id="companySearch" placeholder="Cari company...">
-      <select id="companyName" size="4"></select>
     </div>
 
   </div>
@@ -142,17 +151,11 @@ td{padding:6px}
 <button class="btn" id="btnSubmit">SUBMIT</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded",()=>{
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdBjLnHDR_xFM_kcjXUg740s7R9y4zZOQVu6WV9sAFZ7CPJ9NdpjIVOzrxuZfZkcn8xQ/exec";
+const SCRIPT_URL="YOUR_SCRIPT_URL";
 
-const pic = document.getElementById("pic");
-const belongsTo = document.getElementById("belongsTo");
-const companySearch = document.getElementById("companySearch");
-const companySelect = document.getElementById("companyName");
-const soContainer = document.getElementById("soContainer");
-
-let companyList=[];
+const pic=document.getElementById("pic");
 
 /* LOAD PIC */
 fetch(SCRIPT_URL+"?type=pic")
@@ -161,38 +164,14 @@ fetch(SCRIPT_URL+"?type=pic")
   d.forEach(v=>pic.innerHTML+=`<option>${v}</option>`);
 });
 
-/* LOAD COMPANY */
-fetch(SCRIPT_URL+"?type=company")
-.then(r=>r.json())
-.then(d=>{
-  companyList=d;
-  renderCompany(d);
-});
-
-function renderCompany(list){
-  companySelect.innerHTML="";
-  list.forEach(v=>{
-    companySelect.innerHTML+=`<option>${v}</option>`;
-  });
-}
-
-companySearch.oninput=()=>{
-  renderCompany(companyList.filter(c=>
-    c.toLowerCase().includes(companySearch.value.toLowerCase())
-  ));
-};
-
-companySelect.onchange=()=>{
-  companySearch.value=companySelect.value;
-};
-
 /* ADD SO */
 function addSO(){
   const so=document.createElement("div");
   so.className="so-block";
 
   so.innerHTML=`
-    <button class="btn-icon">✕</button>
+    <button class="delete-so">✕</button>
+
     <h3>Detail SO</h3>
 
     <div class="row">
@@ -209,7 +188,7 @@ function addSO(){
 
       <div class="col">
         <label>No AJU</label>
-        <input class="aju">
+        <input class="aju" minlength="6">
       </div>
 
       <div class="col">
@@ -219,7 +198,7 @@ function addSO(){
 
       <div class="col">
         <label>FCL/LCL</label>
-        <select class="shipment">
+        <select class="ship">
           <option>FCL</option>
           <option>LCL</option>
         </select>
@@ -227,7 +206,7 @@ function addSO(){
 
       <div class="col">
         <label>QTY</label>
-        <input class="qty" placeholder="1x40 / 2x20 / 3,5 Ton">
+        <input placeholder="1x40 / 2x20 / 3,5 Ton">
       </div>
 
     </div>
@@ -243,16 +222,27 @@ function addSO(){
       <tbody class="items"></tbody>
     </table>
 
-    <button class="btn addBiaya">+ Tambah Biaya</button>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn addBiaya">+ Tambah Biaya</button>
+      <span style="color:#e74c3c; cursor:pointer;" class="hapusAll">Hapus Biaya</span>
+    </div>
+
     <div class="total">Total: Rp <span>0</span></div>
   `;
 
-  soContainer.appendChild(so);
+  document.getElementById("soContainer").appendChild(so);
 
-  /* DELETE ICON */
-  so.querySelector(".btn-icon").onclick=()=>so.remove();
+  /* DELETE SO */
+  so.querySelector(".delete-so").onclick=()=>so.remove();
 
+  /* ADD ITEM */
   so.querySelector(".addBiaya").onclick=()=>addItem(so);
+
+  /* HAPUS SEMUA */
+  so.querySelector(".hapusAll").onclick=()=>{
+    so.querySelector(".items").innerHTML="";
+    calc(so);
+  };
 
   addItem(so);
 }
@@ -262,7 +252,7 @@ function addItem(so){
 
   tr.innerHTML=`
     <td>
-      <select class="jenis">
+      <select>
         <option>Biaya Import</option>
         <option>Biaya Export</option>
         <option>Non Shipment</option>
@@ -275,6 +265,7 @@ function addItem(so){
   so.querySelector(".items").appendChild(tr);
 
   tr.querySelector(".nominal").oninput=()=>calc(so);
+
   tr.querySelector(".btn-icon").onclick=()=>{
     tr.remove();
     calc(so);
@@ -282,11 +273,11 @@ function addItem(so){
 }
 
 function calc(so){
-  let t=0;
+  let total=0;
   so.querySelectorAll(".nominal").forEach(i=>{
-    t+=Number(i.value||0);
+    total+=Number(i.value||0);
   });
-  so.querySelector(".total span").innerText=t.toLocaleString("id-ID");
+  so.querySelector(".total span").innerText=total.toLocaleString("id-ID");
 }
 
 document.getElementById("btnAddSO").onclick=addSO;
