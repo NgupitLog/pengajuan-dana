@@ -6,112 +6,49 @@
 <title>Form Pengajuan Estimasi Dana</title>
 
 <style>
-body{
-  font-family:Arial;
-  background:#f4f6f8;
-  padding:15px;
-}
-
+body{font-family:Arial,sans-serif;background:#f4f6f8;padding:20px}
 h2{color:#0b4ea2}
 
-/* CARD */
 .header,.so-block{
   background:#fff;
   padding:15px;
-  border-radius:8px;
-  margin-bottom:15px;
+  border-radius:6px;
+  margin-bottom:20px;
   border-left:5px solid #ff8c00;
-  position:relative;
 }
 
-/* GRID */
-.row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
+label{font-size:13px;font-weight:bold}
+input,select{width:100%;padding:6px;margin-bottom:6px;font-size:13px}
 
-.col{
-  flex:1 1 140px;
-}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.col{flex:1}
+.col.so{flex:2}
+.col.bl{flex:2}
+.col.ship{flex:1}
+.col.qty{flex:.8}
 
-.col.big{flex:2 1 250px}
-
-/* INPUT */
-label{
-  font-size:12px;
-  font-weight:bold;
-}
-
-input,select{
-  width:100%;
-  padding:7px;
-  border:1px solid #ccc;
-  border-radius:4px;
-  font-size:13px;
-}
-
-/* DELETE SO */
-.delete-so{
-  position:absolute;
-  left:10px;
-  top:10px;
-  background:#e74c3c;
-  color:#fff;
-  border:none;
-  border-radius:50%;
-  width:28px;
-  height:28px;
-  cursor:pointer;
-}
-
-/* TABLE */
-table{
-  width:100%;
-  margin-top:10px;
-  border-collapse:collapse;
-}
-
-th{
-  background:#1f5aa6;
-  color:#fff;
-  padding:6px;
-  font-size:12px;
-}
-
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#0b4ea2;color:#fff;padding:6px}
 td{padding:6px}
+td.aksi{text-align:center}
 
-/* BUTTON */
 .btn{
   background:#ff8c00;
   color:#fff;
   border:none;
-  padding:8px 12px;
-  border-radius:5px;
+  padding:6px 12px;
+  border-radius:4px;
   cursor:pointer;
 }
-
 .btn-blue{background:#0b4ea2}
+.btn-danger{background:#e74c3c}
 
-.btn-icon{
-  background:#e74c3c;
-  color:#fff;
-  border:none;
-  border-radius:50%;
-  width:24px;
-  height:24px;
-  cursor:pointer;
-}
+.total{margin-top:8px;font-weight:bold}
+#companySearch{margin-bottom:4px}
 
-/* TOTAL */
-.total{
-  margin-top:10px;
-  font-weight:bold;
-}
-
-/* MOBILE */
 @media(max-width:768px){
   .row{flex-direction:column}
+  .btn{width:100%}
 }
 </style>
 </head>
@@ -125,20 +62,24 @@ td{padding:6px}
 
     <div class="col">
       <label>PIC</label>
-      <select id="pic"></select>
+      <select id="pic">
+        <option value="">-- pilih --</option>
+      </select>
     </div>
 
     <div class="col">
       <label>Belongs To</label>
       <select id="belongsTo">
+        <option value="">-- pilih --</option>
         <option>Ngupit</option>
         <option>Paksi</option>
       </select>
     </div>
 
-    <div class="col big">
+    <div class="col">
       <label>Company Name</label>
       <input id="companySearch" placeholder="Cari company...">
+      <select id="companyName" size="5"></select>
     </div>
 
   </div>
@@ -151,64 +92,107 @@ td{padding:6px}
 <button class="btn" id="btnSubmit">SUBMIT</button>
 
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener("DOMContentLoaded", () => {
 
-const SCRIPT_URL="YOUR_SCRIPT_URL";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdBjLnHDR_xFM_kcjXUg740s7R9y4zZOQVu6WV9sAFZ7CPJ9NdpjIVOzrxuZfZkcn8xQ/exec";
 
-const pic=document.getElementById("pic");
+const pic = document.getElementById("pic");
+const belongsTo = document.getElementById("belongsTo");
+const companySearch = document.getElementById("companySearch");
+const companySelect = document.getElementById("companyName");
+const soContainer = document.getElementById("soContainer");
+const btnAddSO = document.getElementById("btnAddSO");
+const btnSubmit = document.getElementById("btnSubmit");
 
-/* LOAD PIC */
-fetch(SCRIPT_URL+"?type=pic")
-.then(r=>r.json())
-.then(d=>{
-  d.forEach(v=>pic.innerHTML+=`<option>${v}</option>`);
+let companyList = [];
+let submitting = false;
+
+/* ================= LOAD PIC ================= */
+fetch(SCRIPT_URL + "?type=pic")
+  .then(res => res.json())
+  .then(data => {
+    if(Array.isArray(data)){
+      data.forEach(v=>{
+        pic.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
+      });
+    }
+  })
+  .catch(err=>{
+    console.log("PIC load error:", err);
+  });
+
+/* ================= LOAD COMPANY ================= */
+fetch(SCRIPT_URL + "?type=company")
+  .then(res => res.json())
+  .then(data => {
+    if(Array.isArray(data)){
+      companyList = data;
+      renderCompany(data);
+    }
+  })
+  .catch(err=>{
+    console.log("Company load error:", err);
+  });
+
+function renderCompany(list){
+  companySelect.innerHTML="";
+  list.forEach(v=>{
+    companySelect.insertAdjacentHTML("beforeend", `<option>${v}</option>`);
+  });
+}
+
+/* SEARCH */
+companySearch.addEventListener("input", ()=>{
+  const filtered = companyList.filter(c =>
+    c.toLowerCase().includes(companySearch.value.toLowerCase())
+  );
+  renderCompany(filtered);
+  companySelect.style.display="block";
 });
 
-/* ADD SO */
+companySelect.addEventListener("change", ()=>{
+  companySearch.value = companySelect.value;
+  companySelect.style.display="none";
+});
+
+/* ================= ADD SO ================= */
 function addSO(){
-  const so=document.createElement("div");
+  const so = document.createElement("div");
   so.className="so-block";
 
   so.innerHTML=`
-    <button class="delete-so">✕</button>
-
+    <button class="btn btn-danger" style="float:right">HAPUS SO</button>
     <h3>Detail SO</h3>
 
     <div class="row">
-
-      <div class="col big">
+      <div class="col so">
         <label>SO Number</label>
         <input class="soNumber">
       </div>
 
-      <div class="col">
-        <label>BL</label>
-        <input class="bl">
+      <div class="col bl">
+        <label>BL / AJU</label>
+        <input class="blAju">
       </div>
 
-      <div class="col">
-        <label>No AJU</label>
-        <input class="aju" minlength="6">
-      </div>
-
-      <div class="col">
+<div class="col eta">
         <label>ETA</label>
-        <input type="date" class="eta">
+        <input type="date" class="etaRaw">
+        <input class="etaText" readonly>
       </div>
-
-      <div class="col">
+      
+      <div class="col ship">
         <label>FCL/LCL</label>
-        <select class="ship">
+        <select class="shipmentType">
           <option>FCL</option>
           <option>LCL</option>
         </select>
       </div>
 
-      <div class="col">
+      <div class="col qty">
         <label>QTY</label>
-        <input placeholder="1x40 / 2x20 / 3,5 Ton">
+        <input type="text" class="qtyInput">
       </div>
-
     </div>
 
     <table>
@@ -216,57 +200,42 @@ function addSO(){
         <tr>
           <th>Jenis Biaya</th>
           <th>Nominal</th>
-          <th></th>
+          <th>Aksi</th>
         </tr>
       </thead>
       <tbody class="items"></tbody>
     </table>
 
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button class="btn addBiaya">+ Tambah Biaya</button>
-      <span style="color:#e74c3c; cursor:pointer;" class="hapusAll">Hapus Biaya</span>
-    </div>
-
-    <div class="total">Total: Rp <span>0</span></div>
+    <button class="btn addBiaya">+ Tambah Biaya</button>
+    <div class="total">Total SO: Rp <span>0</span></div>
   `;
 
-  document.getElementById("soContainer").appendChild(so);
+  soContainer.appendChild(so);
 
-  /* DELETE SO */
-  so.querySelector(".delete-so").onclick=()=>so.remove();
-
-  /* ADD ITEM */
-  so.querySelector(".addBiaya").onclick=()=>addItem(so);
-
-  /* HAPUS SEMUA */
-  so.querySelector(".hapusAll").onclick=()=>{
-    so.querySelector(".items").innerHTML="";
-    calc(so);
-  };
+  so.querySelector(".btn-danger").onclick = ()=> so.remove();
+  so.querySelector(".addBiaya").onclick = ()=> addItem(so);
 
   addItem(so);
 }
 
 function addItem(so){
   const tr=document.createElement("tr");
-
   tr.innerHTML=`
     <td>
-      <select>
+      <select class="jenisBiaya">
         <option>Biaya Import</option>
         <option>Biaya Export</option>
         <option>Non Shipment</option>
       </select>
     </td>
     <td><input type="number" class="nominal" value="0"></td>
-    <td><button class="btn-icon">✕</button></td>
+    <td class="aksi"><button class="btn btn-danger">X</button></td>
   `;
 
   so.querySelector(".items").appendChild(tr);
 
   tr.querySelector(".nominal").oninput=()=>calc(so);
-
-  tr.querySelector(".btn-icon").onclick=()=>{
+  tr.querySelector("button").onclick=()=>{
     tr.remove();
     calc(so);
   };
@@ -277,10 +246,63 @@ function calc(so){
   so.querySelectorAll(".nominal").forEach(i=>{
     total+=Number(i.value||0);
   });
-  so.querySelector(".total span").innerText=total.toLocaleString("id-ID");
+  so.querySelector(".total span").innerText=
+    total.toLocaleString("id-ID");
 }
 
-document.getElementById("btnAddSO").onclick=addSO;
+/* ================= SUBMIT ================= */
+btnSubmit.onclick=()=>{
+  if(submitting) return;
+
+  submitting=true;
+  btnSubmit.disabled=true;
+  btnSubmit.innerText="Mengirim...";
+
+  const data={
+    pic:pic.value,
+    belongsTo:belongsTo.value,
+    companyName:companySearch.value,
+    soList:[]
+  };
+
+  document.querySelectorAll(".so-block").forEach(so=>{
+    const items=[];
+    so.querySelectorAll(".items tr").forEach(r=>{
+      items.push({
+        jenisBiaya:r.querySelector(".jenisBiaya").value,
+        nominal:Number(r.querySelector(".nominal").value||0)
+      });
+    });
+
+    data.soList.push({
+      soNumber:so.querySelector(".soNumber").value,
+      blAju:so.querySelector(".blAju").value,
+      shipmentType:so.querySelector(".shipmentType").value,
+      qty:so.querySelector(".qtyInput").value,
+      items
+    });
+  });
+
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    mode:"no-cors",
+    body:JSON.stringify(data)
+  })
+  .then(()=>{
+    alert("BERHASIL — DATA TERINPUT");
+    location.reload();
+  })
+  .catch(()=>{
+    alert("GAGAL");
+  })
+  .finally(()=>{
+    submitting=false;
+    btnSubmit.disabled=false;
+    btnSubmit.innerText="SUBMIT";
+  });
+};
+
+btnAddSO.onclick=addSO;
 addSO();
 
 });
@@ -288,3 +310,4 @@ addSO();
 
 </body>
 </html>
+
